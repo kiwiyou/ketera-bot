@@ -649,7 +649,7 @@ struct Crate {
     url: String,
 }
 
-// returns the root url of document without a slash
+// returns the root url of document with a slash
 async fn get_latest_document(crate_name: &str) -> reqwest::Result<Option<Crate>> {
     if let Some(std) = get_std_rs(crate_name) {
         Ok(Some(std))
