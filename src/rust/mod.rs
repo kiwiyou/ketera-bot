@@ -16,10 +16,10 @@ pub async fn crate_information(
     cx: DispatcherHandlerCx<Message>,
     args: Vec<String>,
 ) -> ResponseResult<()> {
-    const USAGE: &str = r#"<code>/crate [crate-name]</code>
-Show information of a crate.
+    const USAGE: &str = "<code>/crate [crate-name]</code>
+        Show information of a crate.
 
-<code>[crate-name]</code>: the name of a crate"#;
+        <code>[crate-name]</code>: the name of a crate";
 
     if args.is_empty() {
         cx.reply_to(USAGE)
@@ -95,16 +95,16 @@ Show information of a crate.
             };
             use chrono_humanize::HumanTime;
             let info_text = format!(
-                r#"<b>{crate_name}</b> <i>{latest}</i> ({size}B) by {authors}
-{license}
+                "<b>{crate_name}</b> <i>{latest}</i> ({size}B) by {authors}
+                {license}
 
-{description}{keywords}{categories}
+                {description}{keywords}{categories}
 
-⬇️{recent} downloads recently ({total} total)
-📊{dependencies} dependencies ({dev_dependencies} for dev)
-🕒 updated at {updated_at} ({updated_elapsed})
-🕒 created at {created_at} ({created_elapsed})
-"#,
+                ⬇️{recent} downloads recently ({total} total)
+                📊{dependencies} dependencies ({dev_dependencies} for dev)
+                🕒 updated at {updated_at} ({updated_elapsed})
+                🕒 created at {created_at} ({created_elapsed})
+                ",
                 crate_name = information.name,
                 latest = information.newest_version,
                 size = size_humanize(information.crate_size),
@@ -171,10 +171,10 @@ pub async fn search_crate(
     cx: DispatcherHandlerCx<Message>,
     args: Vec<String>,
 ) -> ResponseResult<()> {
-    const USAGE: &str = r#"<code>/docs [path]</code>
-Show online documentation with specified path in a crate.
+    const USAGE: &str = "<code>/docs [path]</code>
+        Show online documentation with specified path in a crate.
 
-<code>[path]</code>: the path to the item"#;
+        <code>[path]</code>: the path to the item";
 
     if args.is_empty() {
         cx.reply_to(USAGE)
@@ -304,10 +304,10 @@ Show online documentation with specified path in a crate.
                         String::new()
                     };
                     let function_text = format!(
-                        r#"Function <code>{function}</code> {portability}
-{definition}
+                        "Function <code>{function}</code> {portability}
+                        {definition}
 
-{description}"#,
+                        {description}",
                         function = path,
                         definition = definition,
                         portability = portability_text,
@@ -343,10 +343,10 @@ Show online documentation with specified path in a crate.
                         String::new()
                     };
                     let struct_text = format!(
-                        r#"Struct <code>{struct}</code> {portability}
-{definition}
+                        "Struct <code>{struct}</code> {portability}
+                        {definition}
 
-{description}"#,
+                        {description}",
                         struct = path,
                         definition = definition,
                         portability = portability_text,
@@ -385,10 +385,10 @@ Show online documentation with specified path in a crate.
                         String::new()
                     };
                     let trait_text = format!(
-                        r#"Trait <code>{trait}</code> {portability}
-{definition}
+                        "Trait <code>{trait}</code> {portability}
+                        {definition}
 
-{description}"#,
+                        {description}",
                         trait = path,
                         definition = definition,
                         portability = portability_text,
@@ -440,10 +440,10 @@ Show online documentation with specified path in a crate.
                         String::new()
                     };
                     let method_text = format!(
-                        r#"Method <code>{method}</code> {portability}
-{definition}
+                        "Method <code>{method}</code> {portability}
+                        {definition}
 
-{description}"#,
+                        {description}",
                         method = path,
                         definition = definition,
                         portability = portability_text,
@@ -478,10 +478,10 @@ Show online documentation with specified path in a crate.
                         String::new()
                     };
                     let method_text = format!(
-                        r#"Trait Method <code>{method}</code> {portability}
-{definition}
+                        "Trait Method <code>{method}</code> {portability}
+                        {definition}
 
-{description}"#,
+                        {description}",
                         method = path,
                         definition = definition,
                         portability = portability_text,
@@ -609,11 +609,11 @@ pub async fn search_crate_callback(cx: DispatcherHandlerCx<CallbackQuery>) -> Re
                             String::new()
                         };
                         let function_text = format!(
-                            r#"Function <code>{function}</code> {portability}
-{definition}
+                            "Function <code>{function}</code> {portability}
+                            {definition}
 
-<b>{title}</b>
-{document}"#,
+                            <b>{title}</b>
+                            {document}",
                             function = path,
                             definition = definition,
                             portability = portability_text,
@@ -663,10 +663,10 @@ pub async fn search_crate_callback(cx: DispatcherHandlerCx<CallbackQuery>) -> Re
                     };
 
                     let struct_text = format!(
-                        r#"Struct <code>{struct}</code> {portability}
+                        "Struct <code>{struct}</code> {portability}
 
-<b>{title}</b>
-{document}"#,
+                        <b>{title}</b>
+                        {document}",
                         struct = path,
                         portability = portability_text,
                         title = title,
@@ -726,10 +726,10 @@ pub async fn search_crate_callback(cx: DispatcherHandlerCx<CallbackQuery>) -> Re
                     };
 
                     let trait_text = format!(
-                        r#"Trait <code>{trait}</code> {portability}
+                        "Trait <code>{trait}</code> {portability}
 
-<b>{title}</b>
-{document}"#,
+                        <b>{title}</b>
+                        {document}",
                         trait = path,
                         portability = portability_text,
                         title = title,
@@ -766,11 +766,11 @@ pub async fn search_crate_callback(cx: DispatcherHandlerCx<CallbackQuery>) -> Re
                             String::new()
                         };
                         let method_text = format!(
-                            r#"Method <code>{method}</code> {portability}
-{definition}
+                            "Method <code>{method}</code> {portability}
+                            {definition}
 
-<b>{title}</b>
-{document}"#,
+                            <b>{title}</b>
+                            {document}",
                             method = path,
                             definition = definition,
                             portability = portability_text,
@@ -808,11 +808,11 @@ pub async fn search_crate_callback(cx: DispatcherHandlerCx<CallbackQuery>) -> Re
                             String::new()
                         };
                         let method_text = format!(
-                            r#"Trait Method <code>{method}</code> {portability}
-{definition}
+                            "Trait Method <code>{method}</code> {portability}
+                            {definition}
 
-<b>{title}</b>
-{document}"#,
+                            <b>{title}</b>
+                            {document}",
                             method = path,
                             definition = definition,
                             portability = portability_text,
