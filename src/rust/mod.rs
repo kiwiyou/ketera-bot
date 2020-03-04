@@ -16,9 +16,9 @@ pub async fn crate_information(
     cx: DispatcherHandlerCx<Message>,
     args: Vec<String>,
 ) -> ResponseResult<()> {
-    const USAGE: &str = "<code>/crate [crate-name]</code>
-        Show information of a crate.
-
+    const USAGE: &str = "<code>/crate [crate-name]</code>\n\
+        Show information of a crate.\n\
+        \n\
         <code>[crate-name]</code>: the name of a crate";
 
     if args.is_empty() {
@@ -95,16 +95,15 @@ pub async fn crate_information(
             };
             use chrono_humanize::HumanTime;
             let info_text = format!(
-                "<b>{crate_name}</b> <i>{latest}</i> ({size}B) by {authors}
-                {license}
-
-                {description}{keywords}{categories}
-
-                ⬇️{recent} downloads recently ({total} total)
-                📊{dependencies} dependencies ({dev_dependencies} for dev)
-                🕒 updated at {updated_at} ({updated_elapsed})
-                🕒 created at {created_at} ({created_elapsed})
-                ",
+                "<b>{crate_name}</b> <i>{latest}</i> ({size}B) by {authors}\n\
+                {license}\n\
+                \n\
+                {description}{keywords}{categories}\n\
+                \n\
+                ⬇️{recent} downloads recently ({total} total)\n\
+                📊{dependencies} dependencies ({dev_dependencies} for dev)\n\
+                🕒 updated at {updated_at} ({updated_elapsed})\n\
+                🕒 created at {created_at} ({created_elapsed})",
                 crate_name = information.name,
                 latest = information.newest_version,
                 size = size_humanize(information.crate_size),
@@ -171,9 +170,9 @@ pub async fn search_crate(
     cx: DispatcherHandlerCx<Message>,
     args: Vec<String>,
 ) -> ResponseResult<()> {
-    const USAGE: &str = "<code>/docs [path]</code>
-        Show online documentation with specified path in a crate.
-
+    const USAGE: &str = "<code>/docs [path]</code>\n\
+        Show online documentation with specified path in a crate.\n\
+        \n\
         <code>[path]</code>: the path to the item";
 
     if args.is_empty() {
@@ -202,318 +201,69 @@ pub async fn search_crate(
             }
         };
         if let Some(document) = document {
-            use search::CrateDocument;
             info!("Docs {{ Path = {} }}", path);
 
-            let inline_message = match &document {
-                CrateDocument::Module {
-                    path,
-                    portability,
-                    modules,
-                    structs,
-                    traits,
-                    enums,
-                    macros,
-                    functions,
-                    attributes,
-                    consts,
-                } => {
-                    let portability_text = if let Some(portability) = portability {
-                        format!("<u>({})</u>", portability)
-                    } else {
-                        String::new()
-                    };
-                    let module_text = format!(
-                        "Module <code>{module}</code> {portability}",
-                        module = path,
-                        portability = portability_text
-                    );
-                    let markup = {
-                        let mut inline_keyboard = Vec::new();
-                        if !modules.is_empty() {
-                            inline_keyboard.push(InlineKeyboardButton::callback(
-                                "Modules".into(),
-                                "modules".into(),
-                            ));
-                        }
-                        if !structs.is_empty() {
-                            inline_keyboard.push(InlineKeyboardButton::callback(
-                                "Structs".into(),
-                                "structs".into(),
-                            ));
-                        }
-                        if !traits.is_empty() {
-                            inline_keyboard.push(InlineKeyboardButton::callback(
-                                "Traits".into(),
-                                "traits".into(),
-                            ));
-                        }
-                        if !enums.is_empty() {
-                            inline_keyboard.push(InlineKeyboardButton::callback(
-                                "Enums".into(),
-                                "enums".into(),
-                            ));
-                        }
-                        if !macros.is_empty() {
-                            inline_keyboard.push(InlineKeyboardButton::callback(
-                                "Macros".into(),
-                                "macros".into(),
-                            ));
-                        }
-                        if !functions.is_empty() {
-                            inline_keyboard.push(InlineKeyboardButton::callback(
-                                "Functions".into(),
-                                "functions".into(),
-                            ));
-                        }
-                        if !attributes.is_empty() {
-                            inline_keyboard.push(InlineKeyboardButton::callback(
-                                "Attributes".into(),
-                                "attributes".into(),
-                            ));
-                        }
-                        if !consts.is_empty() {
-                            inline_keyboard.push(InlineKeyboardButton::callback(
-                                "Consts".into(),
-                                "modules".into(),
-                            ));
-                        }
-                        InlineKeyboardMarkup {
-                            inline_keyboard: inline_keyboard
-                                .chunks(2)
-                                .map(|chunk| chunk.to_owned())
-                                .collect(),
-                        }
-                    };
-                    cx.reply_to(module_text)
-                        .parse_mode(ParseMode::HTML)
-                        .reply_markup(markup)
-                        .send()
-                        .await?
-                }
-                CrateDocument::Function {
-                    path,
-                    definition,
-                    portability,
-                    description,
-                    sections,
-                } => {
-                    let portability_text = if let Some(portability) = portability {
-                        format!("<u>({})</u>", portability)
-                    } else {
-                        String::new()
-                    };
-                    let function_text = format!(
-                        "Function <code>{function}</code> {portability}
-                        {definition}
-
-                        {description}",
-                        function = path,
-                        definition = definition,
-                        portability = portability_text,
-                        description = description,
-                    );
-                    let markup = {
-                        let mut inline_keyboard = Vec::new();
-                        for (i, (key, _)) in sections.iter().enumerate() {
-                            inline_keyboard.push(vec![InlineKeyboardButton::callback(
-                                key.clone(),
-                                i.to_string(),
-                            )]);
-                        }
-                        InlineKeyboardMarkup { inline_keyboard }
-                    };
-                    cx.reply_to(function_text)
-                        .parse_mode(ParseMode::HTML)
-                        .reply_markup(markup)
-                        .send()
-                        .await?
-                }
-                CrateDocument::Struct {
-                    path,
-                    definition,
-                    portability,
-                    description,
-                    sections,
-                    ..
-                } => {
-                    let portability_text = if let Some(portability) = portability {
-                        format!("<u>({})</u>", portability)
-                    } else {
-                        String::new()
-                    };
-                    let struct_text = format!(
-                        "Struct <code>{struct}</code> {portability}
-                        {definition}
-
-                        {description}",
-                        struct = path,
-                        definition = definition,
-                        portability = portability_text,
-                        description = description,
-                    );
-                    let markup = {
-                        let mut inline_keyboard = vec![vec![
-                            InlineKeyboardButton::callback("Methods".into(), "methods".into()),
-                            InlineKeyboardButton::callback("Impls".into(), "impls".into()),
-                        ]];
-                        for (i, (key, _)) in sections.iter().enumerate() {
-                            inline_keyboard.push(vec![InlineKeyboardButton::callback(
-                                key.clone(),
-                                i.to_string(),
-                            )]);
-                        }
-                        InlineKeyboardMarkup { inline_keyboard }
-                    };
-                    cx.reply_to(struct_text)
-                        .parse_mode(ParseMode::HTML)
-                        .reply_markup(markup)
-                        .send()
-                        .await?
-                }
-                CrateDocument::Trait {
-                    path,
-                    definition,
-                    portability,
-                    description,
-                    sections,
-                    ..
-                } => {
-                    let portability_text = if let Some(portability) = portability {
-                        format!("<u>({})</u>", portability)
-                    } else {
-                        String::new()
-                    };
-                    let trait_text = format!(
-                        "Trait <code>{trait}</code> {portability}
-                        {definition}
-
-                        {description}",
-                        trait = path,
-                        definition = definition,
-                        portability = portability_text,
-                        description = description,
-                    );
-                    let markup = {
-                        let mut inline_keyboard = vec![
-                            vec![InlineKeyboardButton::callback(
-                                "Required Methods".into(),
-                                "rmethods".into(),
-                            )],
-                            vec![InlineKeyboardButton::callback(
-                                "Provided Methods".into(),
-                                "pmethods".into(),
-                            )],
-                            vec![InlineKeyboardButton::callback(
-                                "Implementations".into(),
-                                "impls".into(),
-                            )],
-                            vec![InlineKeyboardButton::callback(
-                                "Implementors".into(),
-                                "implors".into(),
-                            )],
-                        ];
-                        for (i, (key, _)) in sections.iter().enumerate() {
-                            inline_keyboard.push(vec![InlineKeyboardButton::callback(
-                                key.clone(),
-                                i.to_string(),
-                            )]);
-                        }
-                        InlineKeyboardMarkup { inline_keyboard }
-                    };
-                    cx.reply_to(trait_text)
-                        .parse_mode(ParseMode::HTML)
-                        .reply_markup(markup)
-                        .send()
-                        .await?
-                }
-                CrateDocument::Method {
-                    path,
-                    definition,
-                    portability,
-                    description,
-                    sections,
-                } => {
-                    let portability_text = if let Some(portability) = portability {
-                        format!("<u>({})</u>", portability)
-                    } else {
-                        String::new()
-                    };
-                    let method_text = format!(
-                        "Method <code>{method}</code> {portability}
-                        {definition}
-
-                        {description}",
-                        method = path,
-                        definition = definition,
-                        portability = portability_text,
-                        description = description,
-                    );
-                    let markup = {
-                        let mut inline_keyboard = Vec::new();
-                        for (i, (key, _)) in sections.iter().enumerate() {
-                            inline_keyboard.push(vec![InlineKeyboardButton::callback(
-                                key.clone(),
-                                i.to_string(),
-                            )]);
-                        }
-                        InlineKeyboardMarkup { inline_keyboard }
-                    };
-                    cx.reply_to(method_text)
-                        .parse_mode(ParseMode::HTML)
-                        .reply_markup(markup)
-                        .send()
-                        .await?
-                }
-                CrateDocument::TraitMethod {
-                    path,
-                    definition,
-                    portability,
-                    description,
-                    sections,
-                } => {
-                    let portability_text = if let Some(portability) = portability {
-                        format!("<u>({})</u>", portability)
-                    } else {
-                        String::new()
-                    };
-                    let method_text = format!(
-                        "Trait Method <code>{method}</code> {portability}
-                        {definition}
-
-                        {description}",
-                        method = path,
-                        definition = definition,
-                        portability = portability_text,
-                        description = description,
-                    );
-                    let markup = {
-                        let mut inline_keyboard = Vec::new();
-                        for (i, (key, _)) in sections.iter().enumerate() {
-                            inline_keyboard.push(vec![InlineKeyboardButton::callback(
-                                key.clone(),
-                                i.to_string(),
-                            )]);
-                        }
-                        InlineKeyboardMarkup { inline_keyboard }
-                    };
-                    cx.reply_to(method_text)
-                        .parse_mode(ParseMode::HTML)
-                        .reply_markup(markup)
-                        .send()
-                        .await?
-                }
+            let portability_text = if let Some(portability) = &document.portability_note {
+                format!("\n<i>{}</i>", portability)
+            } else {
+                String::new()
             };
+
+            let stability_text = if let Some(stability) = &document.stability_note {
+                format!("\n<i>{}</i>", stability)
+            } else {
+                String::new()
+            };
+
+            let deprecated_text = if document.deprecated {
+                "<b>Deprecated</b>"
+            } else {
+                ""
+            };
+
+            let definition_text = if let Some(definition) = &document.definition {
+                format!("\n{}", definition)
+            } else {
+                String::new()
+            };
+
+            let text = format!(
+                "{title} {deprecated}{portability}{stability}{definition}\n\
+                \n\
+                {description}",
+                title = document.title,
+                deprecated = deprecated_text,
+                portability = portability_text,
+                stability = stability_text,
+                definition = definition_text,
+                description = document.description,
+            );
+            let markup = InlineKeyboardMarkup {
+                inline_keyboard: document
+                    .sections
+                    .iter()
+                    .enumerate()
+                    .map(|(i, (heading, _))| {
+                        vec![InlineKeyboardButton::callback(
+                            heading.clone(),
+                            i.to_string(),
+                        )]
+                    })
+                    .collect(),
+            };
+            let message = cx
+                .reply_to(text)
+                .parse_mode(ParseMode::HTML)
+                .reply_markup(markup)
+                .send()
+                .await?;
             {
                 let mut lock = SEARCH_RESULT.write().await;
-                lock.insert((inline_message.chat_id(), inline_message.id), document);
+                lock.insert((message.chat_id(), message.id), document);
             }
             {
                 let mut lock = CALLBACK_SESSIONS.write().await;
-                lock.insert(
-                    (inline_message.chat_id(), inline_message.id),
-                    CallbackSession::Docs,
-                );
+                lock.insert((message.chat_id(), message.id), CallbackSession::Docs);
             }
         } else {
             let not_found = format!("Could not find `{path}`", path = path.replace('`', "\\`"));
@@ -531,329 +281,107 @@ pub async fn search_crate_callback(cx: DispatcherHandlerCx<CallbackQuery>) -> Re
     let data = cx.update.data.as_ref().unwrap();
 
     let lock = SEARCH_RESULT.read().await;
-    if let Some(search_result) = lock.get(&(message.chat_id(), message.id)) {
-        use search::CrateDocument;
-        match search_result {
-            CrateDocument::Module {
-                path,
-                portability,
-                modules,
-                structs,
-                traits,
-                enums,
-                macros,
-                functions,
-                attributes,
-                consts,
-            } => {
-                info!("DocsCallback {{ Path = {}, Data = {} }}", path, data);
-                let documents = match data.as_ref() {
-                    "modules" => Some(modules),
-                    "structs" => Some(structs),
-                    "traits" => Some(traits),
-                    "enums" => Some(enums),
-                    "macros" => Some(macros),
-                    "functions" => Some(functions),
-                    "attributes" => Some(attributes),
-                    "consts" => Some(consts),
-                    _ => None,
-                };
-                if let Some(documents) = documents {
-                    let portability_text = if let Some(portability) = portability {
-                        format!("<u>({})</u>", portability)
-                    } else {
-                        String::new()
-                    };
-                    let documents_text =
-                        documents
-                            .iter()
-                            .map(items_to_text)
-                            .fold(String::new(), |mut acc, s| {
-                                acc.push_str(&s);
-                                acc.push('\n');
-                                acc
-                            });
-                    let module_text = format!(
-                        "Module <code>{module}</code> {portability}\n\n{documents}",
-                        module = path,
-                        portability = portability_text,
-                        documents = documents_text,
-                    );
-                    cx.bot
-                        .edit_message_text(
-                            ChatOrInlineMessage::Chat {
-                                chat_id: message.chat_id().into(),
-                                message_id: message.id,
-                            },
-                            module_text,
-                        )
-                        .parse_mode(ParseMode::HTML)
-                        .reply_markup(message.reply_markup().unwrap().clone())
-                        .send()
-                        .await?;
-                }
-            }
-            CrateDocument::Function {
-                path,
-                definition,
-                portability,
-                sections,
-                ..
-            } => {
-                info!("DocsCallback {{ Path = {}, Data = {} }}", path, data);
-                if let Ok(index) = data.parse::<usize>() {
-                    if let Some((title, document)) = sections.get(index) {
-                        let portability_text = if let Some(portability) = portability {
-                            format!("<u>({})</u>", portability)
-                        } else {
-                            String::new()
-                        };
-                        let function_text = format!(
-                            "Function <code>{function}</code> {portability}
-                            {definition}
+    if let Some(document) = lock.get(&(message.chat_id(), message.id)) {
+        if let Some((heading, article)) = data
+            .parse::<usize>()
+            .ok()
+            .and_then(|i| document.sections.get(i))
+        {
+            info!("Docs {{ Title = {}, Data = {} }}", document.title, data);
+            let portability_text = if let Some(portability) = &document.portability_note {
+                format!("\n<i>{}</i>", portability)
+            } else {
+                String::new()
+            };
 
-                            <b>{title}</b>
-                            {document}",
-                            function = path,
-                            definition = definition,
-                            portability = portability_text,
-                            title = title,
-                            document = document,
-                        );
-                        cx.bot
-                            .edit_message_text(
-                                ChatOrInlineMessage::Chat {
-                                    chat_id: message.chat_id().into(),
-                                    message_id: message.id,
-                                },
-                                function_text,
-                            )
-                            .parse_mode(ParseMode::HTML)
-                            .reply_markup(message.reply_markup().unwrap().clone())
-                            .send()
-                            .await?;
-                    }
-                }
-            }
-            CrateDocument::Struct {
-                path,
-                portability,
-                sections,
-                methods,
-                implementations,
-                ..
-            } => {
-                info!("DocsCallback {{ Path = {}, Data = {} }}", path, data);
-                let section = data
-                    .parse::<usize>()
-                    .ok()
-                    .and_then(|index| sections.get(index))
-                    .cloned()
-                    .or(match data.as_ref() {
-                        "methods" => Some(("Methods".into(), methods.join("\n\n"))),
-                        "impls" => Some(("Implementations".into(), implementations.join("\n\n"))),
-                        _ => None,
-                    });
+            let stability_text = if let Some(stability) = &document.stability_note {
+                format!("\n<i>{}</i>", stability)
+            } else {
+                String::new()
+            };
 
-                if let Some((title, document)) = section {
-                    let portability_text = if let Some(portability) = portability {
-                        format!("<u>({})</u>", portability)
-                    } else {
-                        String::new()
-                    };
+            let deprecated_text = if document.deprecated {
+                "<b>Deprecated</b>"
+            } else {
+                ""
+            };
 
-                    let struct_text = format!(
-                        "Struct <code>{struct}</code> {portability}
+            let definition_text = if let Some(definition) = &document.definition {
+                format!("\n{}", definition)
+            } else {
+                String::new()
+            };
 
-                        <b>{title}</b>
-                        {document}",
-                        struct = path,
-                        portability = portability_text,
-                        title = title,
-                        document = document,
-                    );
+            let text = format!(
+                "{title} {deprecated}{portability}{stability}{definition}\n\
+                \n\
+                <b>{heading}</b>\n\
+                {article}\n",
+                title = document.title,
+                deprecated = deprecated_text,
+                portability = portability_text,
+                stability = stability_text,
+                definition = definition_text,
+                heading = heading,
+                article = article_to_text(article),
+            );
 
-                    cx.bot
-                        .edit_message_text(
-                            ChatOrInlineMessage::Chat {
-                                chat_id: message.chat_id().into(),
-                                message_id: message.id,
-                            },
-                            struct_text,
-                        )
-                        .parse_mode(ParseMode::HTML)
-                        .reply_markup(message.reply_markup().unwrap().clone())
-                        .send()
-                        .await?;
-                }
-            }
-            CrateDocument::Trait {
-                path,
-                portability,
-                sections,
-                required_methods,
-                provided_methods,
-                implementations,
-                implementors,
-                ..
-            } => {
-                info!("DocsCallback {{ Path = {}, Data = {} }}", path, data);
-                let section = data
-                    .parse::<usize>()
-                    .ok()
-                    .and_then(|index| sections.get(index))
-                    .cloned()
-                    .or(match data.as_ref() {
-                        "rmethods" => {
-                            Some(("Required Methods".into(), required_methods.join("\n\n")))
-                        }
-                        "pmethods" => {
-                            Some(("Provided Methods".into(), provided_methods.join("\n\n")))
-                        }
-                        "impls" => Some((
-                            "Foreign Implementations".into(),
-                            implementations.join("\n\n"),
-                        )),
-                        "implors" => Some(("Implementors".into(), implementors.join("\n\n"))),
-                        _ => None,
-                    });
-
-                if let Some((title, document)) = section {
-                    let portability_text = if let Some(portability) = portability {
-                        format!("<u>({})</u>", portability)
-                    } else {
-                        String::new()
-                    };
-
-                    let trait_text = format!(
-                        "Trait <code>{trait}</code> {portability}
-
-                        <b>{title}</b>
-                        {document}",
-                        trait = path,
-                        portability = portability_text,
-                        title = title,
-                        document = document,
-                    );
-
-                    cx.bot
-                        .edit_message_text(
-                            ChatOrInlineMessage::Chat {
-                                chat_id: message.chat_id().into(),
-                                message_id: message.id,
-                            },
-                            trait_text,
-                        )
-                        .parse_mode(ParseMode::HTML)
-                        .reply_markup(message.reply_markup().unwrap().clone())
-                        .send()
-                        .await?;
-                }
-            }
-            CrateDocument::Method {
-                path,
-                definition,
-                portability,
-                sections,
-                ..
-            } => {
-                info!("DocsCallback {{ Path = {}, Data = {} }}", path, data);
-                if let Ok(index) = data.parse::<usize>() {
-                    if let Some((title, document)) = sections.get(index) {
-                        let portability_text = if let Some(portability) = portability {
-                            format!("<u>({})</u>", portability)
-                        } else {
-                            String::new()
-                        };
-                        let method_text = format!(
-                            "Method <code>{method}</code> {portability}
-                            {definition}
-
-                            <b>{title}</b>
-                            {document}",
-                            method = path,
-                            definition = definition,
-                            portability = portability_text,
-                            title = title,
-                            document = document,
-                        );
-                        cx.bot
-                            .edit_message_text(
-                                ChatOrInlineMessage::Chat {
-                                    chat_id: message.chat_id().into(),
-                                    message_id: message.id,
-                                },
-                                method_text,
-                            )
-                            .parse_mode(ParseMode::HTML)
-                            .reply_markup(message.reply_markup().unwrap().clone())
-                            .send()
-                            .await?;
-                    }
-                }
-            }
-            CrateDocument::TraitMethod {
-                path,
-                definition,
-                portability,
-                sections,
-                ..
-            } => {
-                info!("DocsCallback {{ Path = {}, Data = {} }}", path, data);
-                if let Ok(index) = data.parse::<usize>() {
-                    if let Some((title, document)) = sections.get(index) {
-                        let portability_text = if let Some(portability) = portability {
-                            format!("<u>({})</u>", portability)
-                        } else {
-                            String::new()
-                        };
-                        let method_text = format!(
-                            "Trait Method <code>{method}</code> {portability}
-                            {definition}
-
-                            <b>{title}</b>
-                            {document}",
-                            method = path,
-                            definition = definition,
-                            portability = portability_text,
-                            title = title,
-                            document = document,
-                        );
-                        cx.bot
-                            .edit_message_text(
-                                ChatOrInlineMessage::Chat {
-                                    chat_id: message.chat_id().into(),
-                                    message_id: message.id,
-                                },
-                                method_text,
-                            )
-                            .parse_mode(ParseMode::HTML)
-                            .reply_markup(message.reply_markup().unwrap().clone())
-                            .send()
-                            .await?;
-                    }
-                }
-            }
+            cx.bot
+                .edit_message_text(
+                    ChatOrInlineMessage::Chat {
+                        chat_id: message.chat_id().into(),
+                        message_id: message.id,
+                    },
+                    text,
+                )
+                .parse_mode(ParseMode::HTML)
+                .reply_markup(message.reply_markup().unwrap().clone())
+                .send()
+                .await?;
         }
     }
     Ok(())
 }
 
-fn items_to_text(item: &search::DocumentBriefItem) -> String {
-    let name = if item.deprecated {
-        format!("<s>{}</s>", item.name)
-    } else {
-        item.name.clone()
-    };
-    let portability_text = if let Some(portability) = &item.portability {
-        format!("<u>({})</u>", portability)
-    } else {
-        String::new()
-    };
-    format!(
-        "<code>{name}</code> {portability}\n{description}",
-        name = name,
-        portability = portability_text,
-        description = item.description,
-    )
+fn article_to_text(item: &search::Article) -> String {
+    match item {
+        search::Article::Text(text) => text.clone(),
+        search::Article::SubDocuments(documents) => documents
+            .iter()
+            .map(|subdocument| {
+                let deprecated_text = if subdocument.deprecated {
+                    "<b>Deprecated</b>"
+                } else {
+                    ""
+                };
+
+                let portability_text = if let Some(portability) = &subdocument.portability_note {
+                    format!("\n<i>{}</i>", portability)
+                } else {
+                    String::new()
+                };
+
+                let stability_text = if let Some(stability) = &subdocument.stability_note {
+                    format!("\n<i>{}</i>", stability)
+                } else {
+                    String::new()
+                };
+
+                let summary_text = if let Some(summary) = &subdocument.summary {
+                    format!("\n{}", summary)
+                } else {
+                    String::new()
+                };
+
+                format!(
+                    "<code>{name}</code> {deprecated}{portability}{stability}{summary}\n",
+                    name = subdocument.name,
+                    deprecated = deprecated_text,
+                    portability = portability_text,
+                    stability = stability_text,
+                    summary = summary_text,
+                )
+            })
+            .collect(),
+    }
 }
