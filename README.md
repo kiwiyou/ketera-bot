@@ -14,8 +14,10 @@ You can invite the bot to your chat and make use of it.
 **Note:** It is not being hosted 24/7 currently.
 
 ## Hosting the bot on your own
+
+### Using Docker
 - Prerequisites
-    - Rust 1.39.0 or higher
+    - [docker](https://docs.docker.com/install/) and [docker-compose](https://docs.docker.com/compose/install/)
     - Create your bot and get the token by talking to [@BotFather](https://t.me/BotFather)
 - Clone the repository
 ```bash
@@ -26,7 +28,14 @@ cd ketera-bot
 ```bash
 export TELOXIDE_TOKEN=<your bot token here>
 ```
-- Build and run it
+- Run the service (`-d` is for background mode)
+```bash
+docker-compose up -d
+```
+
+### Without Docker
+- You need Rust 1.41 or higher
+- On [Using Docker](#using-docker) section, after setting the environmental variables:
 ```bash
 cargo build --release
 cargo run --release

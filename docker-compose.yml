@@ -1,0 +1,11 @@
+version: "3.7"
+services:
+  ketera-bot:
+    image: kiwidev/ketera-bot:latest
+    restart: always
+    environment:
+      - TELOXIDE_TOKEN
+    volumes:
+      - type: bind
+        source: ./config
+        target: /root/config
