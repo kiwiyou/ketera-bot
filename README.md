@@ -11,8 +11,6 @@ It features search on [crates.io](https://crates.io) and [docs.rs](https://docs.
 Ketera is served by [@KeteraBot.](https://t.me/KeteraBot)
 You can invite the bot to your chat and make use of it.
 
-**Note:** It is not being hosted 24/7 currently.
-
 ## Hosting the bot on your own
 
 ### Using Docker
