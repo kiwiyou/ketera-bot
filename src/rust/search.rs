@@ -80,7 +80,8 @@ impl<'a> CrateStructure<'a> {
             static ref ATTRIBUTES_SELECTOR: Selector =
                 Selector::parse("#attributes + table tr").unwrap();
             static ref CONSTS_SELECTOR: Selector = Selector::parse("#consts + table tr").unwrap();
-            static ref DEFINITION_SELECTOR: Selector = Selector::parse("#main > .type_decl > pre").unwrap();
+            static ref DEFINITION_SELECTOR: Selector =
+                Selector::parse("#main > .type_decl > pre").unwrap();
             static ref DOCBLOCK_SELECTOR: Selector =
                 Selector::parse("#main > div.docblock:not(.type-decl)").unwrap();
             static ref METHODS_SELECTOR: Selector =
@@ -103,79 +104,11 @@ impl<'a> CrateStructure<'a> {
                 Selector::parse(".deprecated").unwrap();
         }
 
-        let mut url = crate_location.to_string();
-        // without crate name
-        let effective_module = &self.module[1..];
-        match self.structure_type {
-            StructureType::Module => {
-                // module/submodule/index.html
-                url.push_str(&effective_module.join("/"));
-                if !effective_module.is_empty() {
-                    url.push('/');
-                }
-                url.push_str("index.html");
-            }
-            StructureType::Function => {
-                // module/submodule/fn.foo.html
-                url.push_str(&effective_module.join("/"));
-                if !effective_module.is_empty() {
-                    url.push('/');
-                }
-                url.push_str("fn.");
-                url.push_str(self.name);
-                url.push_str(".html");
-            }
-            StructureType::Struct => {
-                // module/submodule/struct.foo.html
-                url.push_str(&effective_module.join("/"));
-                if !effective_module.is_empty() {
-                    url.push('/');
-                }
-                url.push_str("struct");
-                url.push_str(self.name);
-                url.push_str(".html");
-            }
-            StructureType::Trait => {
-                // module/submodule/trait.foo.html
-                url.push_str(&effective_module.join("/"));
-                if !effective_module.is_empty() {
-                    url.push('/');
-                }
-                url.push_str("/trait");
-                url.push_str(self.name);
-                url.push_str(".html");
-            }
-            StructureType::Method => {
-                // module/submodule/struct.foo.html#method.bar
-                let effective_module = &effective_module[..effective_module.len() - 1];
-                url.push_str(&effective_module.join("/"));
-                if !effective_module.is_empty() {
-                    url.push('/');
-                }
-                url.push_str("struct");
-                url.push_str(self.module[self.module.len() - 1]);
-                url.push_str(".html");
-            }
-            StructureType::TraitMethod => {
-                // module/submodule/trait.foo.html#tymethod.bar OR
-                // module/submodule/trait.foo.html#method.bar
-                let effective_module = &effective_module[..effective_module.len() - 1];
-                url.push_str(&effective_module.join("/"));
-                if !effective_module.is_empty() {
-                    url.push('/');
-                }
-                url.push_str("trait");
-                url.push_str(self.module[self.module.len() - 1]);
-                url.push_str(".html");
-            }
-        }
+        let html = match self.get_html(crate_location).await? {
+            Some(html) => html,
+            None => return Ok(None),
+        };
 
-        let response = WEB_CLIENT.get(&url).send().await?;
-        if !response.status().is_success() {
-            return Ok(None);
-        }
-
-        let html = Html::parse_document(response.text().await?.as_ref());
         let title = html.select(&TITLE_SELECTOR).next().unwrap();
         let (definition, portability_note, stability_note, deprecated, docblock) =
             match self.structure_type {
@@ -309,6 +242,82 @@ impl<'a> CrateStructure<'a> {
             sections,
             stability_note,
         }))
+    }
+
+    async fn get_html(&self, crate_location: &str) -> reqwest::Result<Option<Html>> {
+        let mut url = crate_location.to_string();
+        // without crate name
+        let effective_module = &self.module[1..];
+        match self.structure_type {
+            StructureType::Module => {
+                // module/submodule/index.html
+                url.push_str(&effective_module.join("/"));
+                if !effective_module.is_empty() {
+                    url.push('/');
+                }
+                url.push_str("index.html");
+            }
+            StructureType::Function => {
+                // module/submodule/fn.foo.html
+                url.push_str(&effective_module.join("/"));
+                if !effective_module.is_empty() {
+                    url.push('/');
+                }
+                url.push_str("fn.");
+                url.push_str(self.name);
+                url.push_str(".html");
+            }
+            StructureType::Struct => {
+                // module/submodule/struct.foo.html
+                url.push_str(&effective_module.join("/"));
+                if !effective_module.is_empty() {
+                    url.push('/');
+                }
+                url.push_str("struct");
+                url.push_str(self.name);
+                url.push_str(".html");
+            }
+            StructureType::Trait => {
+                // module/submodule/trait.foo.html
+                url.push_str(&effective_module.join("/"));
+                if !effective_module.is_empty() {
+                    url.push('/');
+                }
+                url.push_str("/trait");
+                url.push_str(self.name);
+                url.push_str(".html");
+            }
+            StructureType::Method => {
+                // module/submodule/struct.foo.html#method.bar
+                let effective_module = &effective_module[..effective_module.len() - 1];
+                url.push_str(&effective_module.join("/"));
+                if !effective_module.is_empty() {
+                    url.push('/');
+                }
+                url.push_str("struct");
+                url.push_str(self.module[self.module.len() - 1]);
+                url.push_str(".html");
+            }
+            StructureType::TraitMethod => {
+                // module/submodule/trait.foo.html#tymethod.bar OR
+                // module/submodule/trait.foo.html#method.bar
+                let effective_module = &effective_module[..effective_module.len() - 1];
+                url.push_str(&effective_module.join("/"));
+                if !effective_module.is_empty() {
+                    url.push('/');
+                }
+                url.push_str("trait");
+                url.push_str(self.module[self.module.len() - 1]);
+                url.push_str(".html");
+            }
+        }
+
+        let response = WEB_CLIENT.get(&url).send().await?;
+        if !response.status().is_success() {
+            Ok(None)
+        } else {
+            Ok(Some(Html::parse_document(&response.text().await?)))
+        }
     }
 }
 
